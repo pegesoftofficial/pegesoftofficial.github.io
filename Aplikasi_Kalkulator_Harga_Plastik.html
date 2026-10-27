@@ -1,0 +1,109 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Index Perhitungan Berat & Harga Plastik</title>
+<style>
+:root{font-family:Arial,Helvetica,sans-serif;color:#1f2937;background:#f3f6fa}
+*{box-sizing:border-box}body{margin:0;padding:24px}
+main{max-width:1000px;margin:auto}
+header{background:#17365d;color:#fff;padding:24px;border-radius:14px 14px 0 0}
+h1{font-size:clamp(22px,3vw,30px);margin:0 0 8px}header p{margin:0;color:#e5edf8}
+.panel{background:#fff;padding:22px;border:1px solid #dbe3ed;margin-bottom:16px;border-radius:12px;box-shadow:0 4px 14px #1f29370b}
+header + .panel{border-radius:0 0 12px 12px;margin-bottom:16px}
+h2{font-size:18px;margin:0 0 16px;color:#17365d}
+.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
+.field{display:flex;flex-direction:column;gap:6px}
+label{font-size:14px;font-weight:700}
+input{font:inherit;padding:11px 12px;border:1px solid #b9c6d6;border-radius:8px;width:100%;background:#fff}
+input:focus{outline:2px solid #8bb7ed;border-color:#3269a8}
+.unit{font-size:12px;color:#667085}
+.results{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+.result{background:#f7f9fc;border:1px solid #dbe3ed;border-radius:10px;padding:15px}
+.result .name{font-size:13px;color:#526173;margin-bottom:8px}
+.result output{font-size:clamp(18px,2.5vw,25px);font-weight:700;color:#17365d;overflow-wrap:anywhere}
+.result .unit{display:block;margin-top:5px}
+table{width:100%;border-collapse:collapse}td,th{padding:10px;text-align:left;border-bottom:1px solid #e5eaf0;font-size:14px}th{background:#f7f9fc}
+.note{font-size:13px;line-height:1.5;color:#526173}
+.actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:16px}
+button{border:0;border-radius:8px;padding:10px 14px;font-weight:700;cursor:pointer;background:#17365d;color:white}
+button.secondary{background:#e7edf5;color:#17365d}
+footer{text-align:center;color:#667085;font-size:12px;margin-top:18px}
+@media(max-width:640px){body{padding:12px}.grid,.results{grid-template-columns:1fr}.panel{padding:16px}}
+</style>
+</head>
+<body>
+<main>
+<header>
+<h1>INDEX PERHITUNGAN BERAT &amp; HARGA PLASTIK</h1>
+<p>Ubah angka input untuk menghitung ulang secara otomatis.</p>
+</header>
+<section class="panel">
+<h2>INPUT</h2>
+<div class="grid">
+<div class="field"><label for="width">Lebar plastik</label><input id="width" type="number" min="0" step="any" value="20"><span class="unit">cm</span></div>
+<div class="field"><label for="length">Panjang plastik</label><input id="length" type="number" min="0" step="any" value="40"><span class="unit">cm</span></div>
+<div class="field"><label for="micron">Tebal plastik</label><input id="micron" type="number" min="0" step="any" value="15"><span class="unit">mikron</span></div>
+<div class="field"><label for="density">Massa jenis plastik PE (asumsi)</label><input id="density" type="number" min="0" step="any" value="0.92"><span class="unit">gram/cm³</span></div>
+<div class="field"><label for="price">Harga bahan per kg</label><input id="price" type="number" min="0" step="any" value="40000"><span class="unit">Rp/kg</span></div>
+<div class="field"><label for="layers">Jumlah lapisan</label><input id="layers" type="number" min="0" step="any" value="1"><span class="unit">lapisan (1 = lembar datar)</span></div>
+<div class="field"><label for="sheetPrice">Harga per lembar (jika harga/kg belum diketahui)</label><input id="sheetPrice" type="number" min="0" step="any" value="500"><span class="unit">Rp/lembar (dapat diubah)</span></div>
+<div class="field"><label for="targetWeight">Berat target untuk mencari tebal</label><input id="targetWeight" type="number" min="0" step="any" value="5"><span class="unit">gram</span></div>
+</div>
+<div class="actions"><button type="button" id="reset">Kembalikan nilai awal</button><button type="button" class="secondary" id="print">Cetak hasil</button></div>
+</section>
+<section class="panel">
+<h2>HASIL PERHITUNGAN</h2>
+<div class="results">
+<div class="result"><div class="name">Tebal dalam cm</div><output id="thickness">0</output><span class="unit">cm</span></div>
+<div class="result"><div class="name">Berat satu lembar</div><output id="grams">0</output><span class="unit">gram</span></div>
+<div class="result"><div class="name">Berat satu lembar</div><output id="kg">0</output><span class="unit">kg</span></div>
+<div class="result"><div class="name">Harga satu lembar</div><output id="sheetCost">Rp0</output><span class="unit">Rp/lembar</span></div>
+<div class="result"><div class="name">Harga per kg jika harga per lembar diketahui</div><output id="equiv">Rp0</output><span class="unit">Rp/kg</span></div>
+<div class="result"><div class="name">Tebal plastik untuk mencapai berat target</div><output id="targetMicronResult">0</output><span class="unit">mikron</span></div>
+</div>
+<p class="note">Semua hasil dihitung otomatis berdasarkan rumus dari file Excel. Nilai input dapat diubah sesuai kebutuhan.</p>
+</section>
+<section class="panel">
+<h2>RUMUS YANG DIGUNAKAN</h2>
+<table><thead><tr><th>Perhitungan</th><th>Rumus</th></tr></thead><tbody>
+<tr><td>Tebal (cm)</td><td>Tebal mikron ÷ 10.000</td></tr>
+<tr><td>Berat (gram)</td><td>Lebar × Panjang × Tebal (cm) × Massa jenis × Jumlah lapisan</td></tr>
+<tr><td>Berat (kg)</td><td>Berat (gram) ÷ 1.000</td></tr>
+<tr><td>Harga per lembar</td><td>Berat (kg) × Harga per kg</td></tr>
+<tr><td>Harga per kg jika harga per lembar diketahui</td><td>Harga per lembar ÷ Berat aktual (kg)</td></tr>
+<tr><td>Tebal untuk berat target (mikron)</td><td>Berat target (gram) × 10.000 ÷ (Lebar × Panjang × Massa jenis × Jumlah lapisan)</td></tr>
+</tbody></table>
+<p class="note">Catatan: perhitungan mengikuti rumus Excel sumber, termasuk asumsi massa jenis PE 0,92 gram/cm³, harga input Rp500/lembar, dan berat target 5 gram. Tebal target dihitung dari berat target; harga/kg dihitung dari harga per lembar dibagi berat aktual dalam kg.</p>
+</section>
+<footer>Aplikasi kalkulator plastik sederhana • berjalan langsung di browser, tanpa instalasi</footer>
+</main>
+<script>
+const ids=['width','length','micron','density','price','layers','sheetPrice','targetWeight'];
+const initial={width:20,length:40,micron:15,density:0.92,price:40000,layers:1,sheetPrice:500,targetWeight:5};
+const get=id=>Number(document.getElementById(id).value)||0;
+const fmt=(n,d=6)=>new Intl.NumberFormat('id-ID',{maximumFractionDigits:d}).format(Number.isFinite(n)?n:0);
+const rupiah=n=>'Rp'+new Intl.NumberFormat('id-ID',{maximumFractionDigits:4}).format(Number.isFinite(n)?n:0);
+function calculate(){
+ const b13=get('micron')/10000;
+ const b14=get('width')*get('length')*b13*get('density')*get('layers');
+ const b15=b14/1000;
+ const b16=b15*get('price');
+ const b18=b15===0?0:get('sheetPrice')/b15;
+ const base=get('width')*get('length')*get('density')*get('layers');
+ const targetMicron=base===0?0:get('targetWeight')*10000/base;
+ document.getElementById('thickness').textContent=fmt(b13);
+ document.getElementById('grams').textContent=fmt(b14);
+ document.getElementById('kg').textContent=fmt(b15);
+ document.getElementById('sheetCost').textContent=rupiah(b16);
+ document.getElementById('equiv').textContent=rupiah(b18);
+ document.getElementById('targetMicronResult').textContent=fmt(targetMicron);
+}
+ids.forEach(id=>document.getElementById(id).addEventListener('input',calculate));
+document.getElementById('reset').addEventListener('click',()=>{ids.forEach(id=>document.getElementById(id).value=initial[id]);calculate()});
+document.getElementById('print').addEventListener('click',()=>window.print());
+calculate();
+</script>
+</body>
+</html>
